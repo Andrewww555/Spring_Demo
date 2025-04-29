@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Мой список</title>
+</head>
+<body>
+<h1>Список подарков</h1>
+<a href="/add">Добавить подарок</a>
+<ul>
+  <li th:each="gift: ${gifts}">
+    <p th:text="${gift.name}"></p>
+  </li>
+</ul>
+</body>
+</html>
