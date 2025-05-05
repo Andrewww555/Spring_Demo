@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Редактировать подарок</title>
+</head>
+<body>
+<h1>Редактировать подарок</h1>
+<form th:action="@{/edit/{id}(id=${gift.id})}" th:object="${gift}" method="post">
+  <div>
+    <input type="text" th:field="*{name}" placeholder="Название">
+  </div>
+  <div>
+    <textarea th:field="*{description}" placeholder="Описание"></textarea>
+  </div>
+  <div>
+    <input type="submit" value="Сохранить изменения">
+  </div>
+</form>
+</body>
+</html>
