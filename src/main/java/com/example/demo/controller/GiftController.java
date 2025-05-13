@@ -2,6 +2,8 @@ package com.example.demo.controller;
 
 import com.example.demo.entity.Gift;
 import com.example.demo.repository.GiftRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,57 +13,70 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
-@Controller
-public class GiftController {
-    private final GiftRepository giftRepository;
+@Controller // аннотация spring, которая обрабатывает запросы от пользователей
+public class GiftController { // класс управляет операциями с подарками (подарками в базе данных)
 
-    public GiftController(GiftRepository giftRepository) {
-        this.giftRepository = giftRepository;
+    private final GiftRepository giftRepository; // репозиторий для работы с подарками в базе данных
+
+    public GiftController(GiftRepository giftRepository) { // конструктор для получения репозитория
+        this.giftRepository = giftRepository; // сохраняем ссылку на репозиторий в поле класса
     }
-    @GetMapping("/hello")
-    public String getHello(){
-        return "hello";
+
+    @GetMapping("/hello") // обрабатываем get-запрос на страницу "/hello"
+    public String getHello(Model model) { // метод показывает приветственную страницу
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication(); // получаем информацию о текущем пользователе
+        if (auth != null) { // если пользователь авторизован
+            model.addAttribute("username", auth.getName()); // добавляем имя пользователя в модель
+        }
+        return "hello"; // возвращаем html-шаблон для страницы приветствия
     }
-    @GetMapping("/")
-    public String showAllGifts(Model model){
-        List<Gift> gifts = giftRepository.findAll();
-        model.addAttribute("gift", new Gift());
-        model.addAttribute("gifts", gifts);
-        return "gifts-list";
+
+    @GetMapping("/") // обрабатываем get-запрос на главную страницу
+    public String showAllGifts(Model model) { // метод показывает список всех подарков
+        List<Gift> gifts = giftRepository.findAll(); // получаем все подарки из базы данных
+        model.addAttribute("gift", new Gift()); // добавляем пустой объект подарка в модель (для формы добавления)
+        model.addAttribute("gifts", gifts); // добавляем список подарков в модель
+        return "gifts-list"; // возвращаем html-шаблон для страницы со списком подарков
     }
-    @GetMapping("/add")
-    public String showAddGift(Model model){
-        model.addAttribute("gift", new Gift());
-        return "add-gift";
+
+    @GetMapping("/add") // обрабатываем get-запрос на страницу добавления подарка
+    public String showAddGift(Model model) { // метод показывает форму добавления подарка
+        model.addAttribute("gift", new Gift()); // добавляем пустой объект подарка в модель
+        return "add-gift"; // возвращаем html-шаблон для страницы добавления подарка
     }
-    @PostMapping("/add")
-    public String addGift(@ModelAttribute Gift gift){
-        giftRepository.save(gift);
-        return "redirect:/";
+
+    @PostMapping("/add") // обрабатываем post-запрос при отправке формы добавления подарка
+    public String addGift(@ModelAttribute Gift gift) { // метод сохраняет новый подарок
+        giftRepository.save(gift); // сохраняем подарок в базе данных
+        return "redirect:/"; // перенаправляем пользователя на главную страницу
     }
-    @GetMapping("/gift/{id}")
-    public String showSingleGift(@PathVariable Long id, Model model){
-        Gift gift = giftRepository.findById(id).orElseThrow();
-        model.addAttribute("gift", gift);
-        return "gift-details";
+
+    @GetMapping("/gift/{id}") // обрабатываем get-запрос на страницу просмотра конкретного подарка
+    public String showSingleGift(@PathVariable Long id, Model model) { // метод показывает детали подарка
+        Gift gift = giftRepository.findById(id).orElseThrow(); // находим подарок по id или выбрасываем ошибку, если его нет
+        model.addAttribute("gift", gift); // добавляем подарок в модель
+        return "gift-details"; // возвращаем html-шаблон для страницы с деталями подарка
     }
-    @GetMapping("/edit/{id}")
-    public String showEditGift(@PathVariable Long id, Model model){
-        Gift gift = giftRepository.findById(id).orElseThrow();
-        model.addAttribute("gift", gift);
-        return "edit-gift";
+
+    @GetMapping("/edit/{id}") // обрабатываем get-запрос на страницу редактирования подарка
+    public String showEditGift(@PathVariable Long id, Model model) { // метод показывает форму редактирования подарка
+        Gift gift = giftRepository.findById(id).orElseThrow(); // находим подарок по id или выбрасываем ошибку, если его нет
+        model.addAttribute("gift", gift); // добавляем подарок в модель
+        return "edit-gift"; // возвращаем html-шаблон для страницы редактирования подарка
     }
-    @PostMapping("/edit/{id}")
-    public String updateGift(@PathVariable Long id, @ModelAttribute Gift uploadedGift){
-        Gift gift = giftRepository.findById(id).orElseThrow();
-        gift.setName(uploadedGift.getName());
-        gift.setDescription(uploadedGift.getDescription());
-        giftRepository.save(gift);
-        return "redirect:/gift/"+id;
+
+    @PostMapping("/edit/{id}") // обрабатываем post-запрос при отправке формы редактирования подарка
+    public String updateGift(@PathVariable Long id, @ModelAttribute Gift uploadedGift) { // метод обновляет данные подарка
+        Gift gift = giftRepository.findById(id).orElseThrow(); // находим подарок по id или выбрасываем ошибку, если его нет
+        gift.setName(uploadedGift.getName()); // обновляем название подарка
+        gift.setDescription(uploadedGift.getDescription()); // обновляем описание подарка
+        giftRepository.save(gift); // сохраняем обновленный подарок в базе данных
+        return "redirect:/gift/" + id; // перенаправляем пользователя на страницу с деталями обновленного подарка
     }
-    @GetMapping("/delete/{id}")
-    public String deleteGift(@PathVariable Long id){
-        giftRepository.deleteById(id);
-        return "redirect:/";
+
+    @GetMapping("/delete/{id}") // обрабатываем get-запрос на удаление подарка
+    public String deleteGift(@PathVariable Long id) { // метод удаляет подарок
+        giftRepository.deleteById(id); // удаляем подарок из базы данных по id
+        return "redirect:/"; // перенаправляем пользователя на главную страницу
     }
 }
