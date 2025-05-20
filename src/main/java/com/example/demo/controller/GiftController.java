@@ -1,7 +1,9 @@
 package com.example.demo.controller;
 
 import com.example.demo.entity.Gift;
+import com.example.demo.entity.User;
 import com.example.demo.repository.GiftRepository;
+import com.example.demo.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -10,16 +12,20 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @Controller // аннотация spring, которая обрабатывает запросы от пользователей
 public class GiftController { // класс управляет операциями с подарками (подарками в базе данных)
 
     private final GiftRepository giftRepository; // репозиторий для работы с подарками в базе данных
+    private final UserRepository userRepository;
 
-    public GiftController(GiftRepository giftRepository) { // конструктор для получения репозитория
+    public GiftController(GiftRepository giftRepository, UserRepository userRepository) { // конструктор для получения репозитория
         this.giftRepository = giftRepository; // сохраняем ссылку на репозиторий в поле класса
+        this.userRepository = userRepository;
     }
 
     @GetMapping("/hello") // обрабатываем get-запрос на страницу "/hello"
@@ -32,8 +38,13 @@ public class GiftController { // класс управляет операция�
     }
 
     @GetMapping("/") // обрабатываем get-запрос на главную страницу
-    public String showAllGifts(Model model) { // метод показывает список всех подарков
-        List<Gift> gifts = giftRepository.findAll(); // получаем все подарки из базы данных
+    public String showMainPage(){
+        return "index";
+    }
+    @GetMapping("/gifts")
+    public String showAllGifts(Model model, Principal principal){
+        User user = userRepository.findByUsername(principal.getName());
+        List<Gift> gifts = giftRepository.findByUser(user);
         model.addAttribute("gift", new Gift()); // добавляем пустой объект подарка в модель (для формы добавления)
         model.addAttribute("gifts", gifts); // добавляем список подарков в модель
         return "gifts-list"; // возвращаем html-шаблон для страницы со списком подарков
@@ -46,9 +57,13 @@ public class GiftController { // класс управляет операция�
     }
 
     @PostMapping("/add") // обрабатываем post-запрос при отправке формы добавления подарка
-    public String addGift(@ModelAttribute Gift gift) { // метод сохраняет новый подарок
+    @ResponseBody
+    public String addGift(@ModelAttribute Gift gift, Principal principal){
+        User user = userRepository.findByUsername(principal.getName());
+        gift.setUser(user);
         giftRepository.save(gift); // сохраняем подарок в базе данных
-        return "redirect:/"; // перенаправляем пользователя на главную страницу
+        return "{\"result\": \"success\"}";
+        //return "redirect:/gifts";
     }
 
     @GetMapping("/gift/{id}") // обрабатываем get-запрос на страницу просмотра конкретного подарка

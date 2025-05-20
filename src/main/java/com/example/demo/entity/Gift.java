@@ -43,5 +43,13 @@ public class Gift { // класс представляет таблицу под
 
     public String getDescription() { // метод для получения описания подарка
         return description;
-    }  // метод для получения описания подарка
+    }// метод для получения описания подарка
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
 }
